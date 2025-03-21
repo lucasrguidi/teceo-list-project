@@ -12,5 +12,5 @@ export class PaginationQueryDto {
   @IsNumber()
   @Min(1, { message: 'Limit must be greater than or equal to 1.' })
   @Type(() => Number)
-  limit: number = 1;
+  limit: number = 10;
 }
