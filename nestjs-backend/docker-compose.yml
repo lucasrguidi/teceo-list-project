@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: teceo
+      POSTGRES_PASSWORD: teceo
+      POSTGRES_DB: db_teceo
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: nestjs_app
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: teceo
+      DATABASE_PASSWORD: teceo
+      DATABASE_NAME: db_teceo
+
+volumes:
+  postgres_data:
