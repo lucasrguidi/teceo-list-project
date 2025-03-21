@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ProductsModule } from './products/products.module';
+import { Product } from './products/product.entity';
 
 if (!process.env.DATABASE_PORT) {
-  throw new Error('DATABASE_HOST is not set in env');
+  throw new Error('DATABASE_PORT is not set in env');
 }
 
 @Module({
@@ -16,9 +18,10 @@ if (!process.env.DATABASE_PORT) {
       username: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
-      entities: [],
+      entities: [Product],
       synchronize: true, // Development mode
     }),
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

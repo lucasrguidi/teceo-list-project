@@ -26,6 +26,9 @@ services:
       DATABASE_USER: teceo
       DATABASE_PASSWORD: teceo
       DATABASE_NAME: db_teceo
+    volumes:
+      - .:/app
+    command: npm run start:dev
 
 volumes:
   postgres_data:
