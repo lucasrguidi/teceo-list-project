@@ -31,7 +31,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "prettier": "^3.5.3",
     "typescript": "latest",
-    "vite": "latest",
-    "vite-plugin-eslint": "^1.8.1"
+    "vite": "latest"
   }
 }
