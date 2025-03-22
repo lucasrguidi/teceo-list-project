@@ -13,10 +13,12 @@
     "@emotion/styled": "latest",
     "@mui/icons-material": "next",
     "@mui/material": "next",
+    "@tanstack/react-query": "^5.69.0",
     "react": "latest",
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@typescript-eslint/eslint-plugin": "^8.27.0",
