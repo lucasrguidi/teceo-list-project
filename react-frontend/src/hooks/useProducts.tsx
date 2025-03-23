@@ -16,6 +16,7 @@ import {
   updateProduct as updateProductFn,
   updateProducts,
 } from '../services/productService';
+import useProductMutations from './useProductMutations';
 
 export default function useProducts(limit = 20) {
   const queryClient = useQueryClient();
@@ -58,69 +59,18 @@ export default function useProducts(limit = 20) {
     refetchOnWindowFocus: false,
   });
 
-  const { mutate: createProduct, isPending: isCreatingProduct } = useMutation({
-    mutationFn: createProductFn,
-    onSuccess: () => {
-      toast.success('Produto criado com sucesso');
-    },
-    onError: () => {
-      toast.error('Erro ao criar produto');
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
-  });
-
-  const { mutate: updateProduct, isPending: isUpdatingProduct } = useMutation({
-    mutationFn: updateProductFn,
-    onSuccess: () => {
-      toast.success('Produto atualizado com sucesso');
-    },
-    onError: () => {
-      toast.error('Erro ao atualizar produto');
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
-  });
-
-  const { mutate: deleteProduct, isPending: isDeletingProduct } = useMutation({
-    mutationFn: deleteProductFn,
-    onSuccess: () => {
-      toast.success('Produto removido com sucesso');
-    },
-    onError: () => {
-      toast.error('Erro ao remover produto');
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
-  });
-
-  const { mutate: deleteProducts, isPending: isDeletingProducts } = useMutation(
-    {
-      mutationFn: deleteProductsFn,
-      onSuccess: () => {
-        toast.success('Produtos removidos com sucesso');
-      },
-      onError: () => {
-        toast.error('Erro ao remover produtos');
-      },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-    },
-  );
-
   const {
-    mutate: updateProductsAvailability,
-    isPending: isUpdatingProductsAvailability,
-  } = useMutation({
-    mutationFn: (params: { ids: number[]; availableForSale: boolean }) =>
-      updateProducts(params.ids, params.availableForSale),
-    onSuccess: () => {
-      toast.success(
-        'Status de disponibilidade dos produtos atualizado com sucesso',
-      );
-    },
-    onError: () => {
-      toast.error('Erro ao atualizar status de disponibilidade dos produtos');
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
-  });
+    createProduct,
+    isCreatingProduct,
+    updateProduct,
+    isUpdatingProduct,
+    deleteProduct,
+    isDeletingProduct,
+    deleteProducts,
+    isDeletingProducts,
+    updateProductsAvailability,
+    isUpdatingProductsAvailability,
+  } = useProductMutations();
 
   const handleDeleteClick = (productId: number) => {
     setProductToDelete(productId);

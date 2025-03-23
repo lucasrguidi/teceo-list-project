@@ -1,19 +1,24 @@
-import { Typography } from '@mui/material';
 import {
   MaterialReactTable,
-  MRT_Row,
   MRT_RowSelectionState,
   MRT_TableOptions,
   useMaterialReactTable,
-  type MRT_ColumnDef,
   type MRT_RowVirtualizer,
 } from 'material-react-table';
 import { MRT_Localization_PT_BR } from 'material-react-table/locales/pt-BR';
-import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react';
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type UIEvent,
+} from 'react';
 import { Product } from '../@types/product';
 import useProducts from '../hooks/useProducts';
 
 import { validateProduct } from '../helpers/validators';
+import useProductTableColumns from '../hooks/useProductTableColumns';
 import { useScrollPagination } from '../hooks/useScrollPagination';
 import ActionsToolbar from './ActionsToolbar';
 import RowActions from './RowActions';
@@ -27,85 +32,10 @@ export default function ProductTable() {
 
   const rowVirtualizerInstanceRef = useRef<MRT_RowVirtualizer>(null);
 
-  const COLUMNS = useMemo<MRT_ColumnDef<Product>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Nome',
-        Header: () => <Typography fontWeight="bold">Nome</Typography>,
-        Cell: ({ cell }) => (
-          <Typography>{cell.getValue() as string}</Typography>
-        ),
-        muiEditTextFieldProps: {
-          required: true,
-          error: !!validationErrors?.name,
-          helperText: validationErrors?.name,
-
-          onFocus: () =>
-            setValidationErrors({
-              ...validationErrors,
-              firstName: undefined,
-            }),
-        },
-      },
-      {
-        accessorKey: 'category',
-        header: 'Categoria',
-        Header: () => <Typography fontWeight="bold">Categoria</Typography>,
-        Cell: ({ cell }) => (
-          <Typography>{cell.getValue() as string}</Typography>
-        ),
-        muiEditTextFieldProps: {
-          required: true,
-          error: !!validationErrors?.category,
-          helperText: validationErrors?.category,
-
-          onFocus: () =>
-            setValidationErrors({
-              ...validationErrors,
-              firstName: undefined,
-            }),
-        },
-      },
-      {
-        accessorKey: 'stock',
-        header: 'Estoque',
-        Header: () => <Typography fontWeight="bold">Estoque</Typography>,
-        Cell: ({ cell }) => (
-          <Typography>{cell.getValue() as number}</Typography>
-        ),
-        muiEditTextFieldProps: {
-          required: true,
-          error: !!validationErrors?.stock,
-          helperText: validationErrors?.stock,
-
-          onFocus: () =>
-            setValidationErrors({
-              ...validationErrors,
-              firstName: undefined,
-            }),
-        },
-      },
-      {
-        accessorKey: 'availableForSale',
-        header: 'Disponível para venda',
-        Header: () => (
-          <Typography fontWeight="bold">Disponível para venda</Typography>
-        ),
-        Cell: ({ cell }) => (
-          <Typography>{cell.getValue() ? 'Sim' : 'Não'}</Typography>
-        ),
-        editVariant: 'select',
-        editSelectOptions: ['Sim', 'Não'],
-        muiEditTextFieldProps: {
-          select: true,
-          error: !!validationErrors?.state,
-          helperText: validationErrors?.state,
-        },
-      },
-    ],
-    [validationErrors],
-  );
+  const columns = useProductTableColumns({
+    validationErrors,
+    setValidationErrors,
+  });
 
   const {
     data,
@@ -130,8 +60,10 @@ export default function ProductTable() {
     () => data?.pages.flatMap((page) => page.products) ?? [],
     [data],
   );
+  const totalDBRowCount = data?.pages[0]?.total ?? 0;
 
-  const totalDBRowCount = data?.pages[0].total ?? 0;
+  const MemoizedActionsToolbar = memo(ActionsToolbar);
+  const MemoizedRowActions = memo(RowActions);
 
   const fetchMoreOnBottomReached = useScrollPagination({
     totalDBRowCount,
@@ -180,7 +112,7 @@ export default function ProductTable() {
     };
 
   const table = useMaterialReactTable({
-    columns: COLUMNS,
+    columns,
     data: flatData,
     createDisplayMode: 'row',
     editDisplayMode: 'row',
@@ -190,7 +122,7 @@ export default function ProductTable() {
     onEditingRowCancel: () => setValidationErrors({}),
     onEditingRowSave: (props) => handleUpdateProduct(props),
     renderRowActions: ({ row, table }) => (
-      <RowActions
+      <MemoizedRowActions
         row={row}
         table={table}
         onDelete={() => deleteProduct(+row.id)}
@@ -225,7 +157,7 @@ export default function ProductTable() {
       : undefined,
     enableTopToolbar: false,
     renderBottomToolbarCustomActions: ({ table }) => (
-      <ActionsToolbar
+      <MemoizedActionsToolbar
         table={table}
         onDelete={deleteProducts}
         rowSelection={rowSelection}

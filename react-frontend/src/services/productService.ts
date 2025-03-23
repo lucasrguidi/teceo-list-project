@@ -47,8 +47,6 @@ export async function updateProduct(data: Product): Promise<void> {
       throw new Error(error.message);
     }
 
-    console.log('aqui');
-
     throw new Error('Erro ao atualizar produto');
   }
 }
