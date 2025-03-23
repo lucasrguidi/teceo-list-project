@@ -7,6 +7,7 @@ import { routeTree } from './routeTree.gen';
 import './styles/globals.css';
 import { TanstackQueryProvider } from './providers/TanstackQueryProvider';
 import { NotificationProvider } from './providers/NotificationsProvider';
+import { Bounce, ToastContainer } from 'react-toastify';
 
 const router = createRouter({ routeTree });
 
@@ -22,9 +23,20 @@ if (!rootElement.innerHTML) {
   root.render(
     <React.StrictMode>
       <TanstackQueryProvider>
-        <NotificationProvider>
-          <RouterProvider router={router} />
-        </NotificationProvider>
+        <RouterProvider router={router} />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          transition={Bounce}
+        />
       </TanstackQueryProvider>
     </React.StrictMode>,
   );

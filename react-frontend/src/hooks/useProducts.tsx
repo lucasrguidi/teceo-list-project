@@ -3,18 +3,23 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
+import { ProductsResponse } from '../@types/product';
+import ConfirmModal from '../components/ConfirmModal';
 import {
   createProduct as createProductFn,
   deleteProduct as deleteProductFn,
   getProducts,
   updateProduct as updateProductFn,
 } from '../services/productService';
-import { Product, ProductsResponse } from '../@types/product';
-import { useNotifications } from '@toolpad/core';
 
 export default function useProducts(limit = 20) {
   const queryClient = useQueryClient();
-  const notifications = useNotifications();
+
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
+    useState(false);
+  const [productToDelete, setProductToDelete] = useState<number | null>(null);
 
   const {
     data,
@@ -38,16 +43,10 @@ export default function useProducts(limit = 20) {
   const { mutate: createProduct, isPending: isCreatingProduct } = useMutation({
     mutationFn: createProductFn,
     onSuccess: () => {
-      notifications.show('Produto criado com sucesso', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
+      toast.success('Produto criado com sucesso');
     },
     onError: () => {
-      notifications.show('Erro ao criar produto', {
-        severity: 'error',
-        autoHideDuration: 3000,
-      });
+      toast.error('Erro ao criar produto');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
@@ -55,16 +54,10 @@ export default function useProducts(limit = 20) {
   const { mutate: updateProduct, isPending: isUpdatingProduct } = useMutation({
     mutationFn: updateProductFn,
     onSuccess: () => {
-      notifications.show('Produto atualizado com sucesso', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
+      toast.success('Produto atualizado com sucesso');
     },
     onError: () => {
-      notifications.show('Erro ao atualizar produto', {
-        severity: 'error',
-        autoHideDuration: 3000,
-      });
+      toast.error('Erro ao atualizar produto');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
@@ -72,19 +65,38 @@ export default function useProducts(limit = 20) {
   const { mutate: deleteProduct, isPending: isDeletingProduct } = useMutation({
     mutationFn: deleteProductFn,
     onSuccess: () => {
-      notifications.show('Produto removido com sucesso', {
-        severity: 'info',
-        autoHideDuration: 3000,
-      });
+      toast.success('Produto removido com sucesso');
     },
     onError: () => {
-      notifications.show('Erro ao remover produto', {
-        severity: 'error',
-        autoHideDuration: 3000,
-      });
+      toast.error('Erro ao remover produto');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
+
+  const productName = productToDelete
+    ? data?.pages
+        .flatMap((page) => page.products)
+        .find((product) => product.id === productToDelete)?.name ||
+      'este produto'
+    : 'este produto';
+
+  const handleDeleteClick = (productId: number) => {
+    setProductToDelete(productId);
+    setIsConfirmDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (productToDelete !== null) {
+      deleteProduct(productToDelete.toString());
+    }
+    setIsConfirmDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsConfirmDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
 
   return {
     data,
@@ -96,7 +108,19 @@ export default function useProducts(limit = 20) {
     isCreatingProduct,
     updateProduct,
     isUpdatingProduct,
-    deleteProduct,
+    deleteProduct: handleDeleteClick,
     isDeletingProduct,
+    DeleteModal: () => {
+      return (
+        <ConfirmModal
+          open={isConfirmDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDelete}
+          title="Confirmar exclusão"
+          text="Tem certeza que deseja deletar o produto? Esta ação não pode ser desfeita."
+          actionText="Deletar"
+        />
+      );
+    },
   };
 }

@@ -1,7 +1,6 @@
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import {
   MaterialReactTable,
-  MRT_Row,
   MRT_RowSelectionState,
   MRT_TableOptions,
   useMaterialReactTable,
@@ -9,32 +8,24 @@ import {
   type MRT_RowVirtualizer,
 } from 'material-react-table';
 import { MRT_Localization_PT_BR } from 'material-react-table/locales/pt-BR';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type UIEvent,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react';
 import { Product } from '../@types/product';
 import useProducts from '../hooks/useProducts';
 
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { updateProduct } from '../services/productService';
+import { validateProduct } from '../helpers/validators';
+import { useScrollPagination } from '../hooks/useScrollPagination';
+import ActionsToolbar from './ActionsToolbar';
+import RowActions from './RowActions';
 
 export default function ProductTable() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const rowVirtualizerInstanceRef = useRef<MRT_RowVirtualizer>(null);
-
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
-
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string | undefined>
   >({});
+  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+  const rowVirtualizerInstanceRef = useRef<MRT_RowVirtualizer>(null);
 
-  const columns = useMemo<MRT_ColumnDef<Product>[]>(
+  const COLUMNS = useMemo<MRT_ColumnDef<Product>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -125,6 +116,8 @@ export default function ProductTable() {
     deleteProduct,
     isDeletingProduct,
     isUpdatingProduct,
+    updateProduct,
+    DeleteModal,
   } = useProducts();
 
   const flatData = useMemo(
@@ -133,23 +126,11 @@ export default function ProductTable() {
   );
 
   const totalDBRowCount = data?.pages[0].total ?? 0;
-  const totalFetched = flatData.length;
 
-  const fetchMoreOnBottomReached = useCallback(
-    (containerRefElement?: HTMLDivElement | null) => {
-      if (containerRefElement) {
-        const { scrollHeight, scrollTop, clientHeight } = containerRefElement;
-        if (
-          scrollHeight - scrollTop - clientHeight < 400 &&
-          !isFetching &&
-          totalFetched < totalDBRowCount
-        ) {
-          fetchNextPage();
-        }
-      }
-    },
-    [fetchNextPage, isFetching, totalFetched, totalDBRowCount],
-  );
+  const fetchMoreOnBottomReached = useScrollPagination({
+    totalDBRowCount,
+    fetchNextPage,
+  });
 
   useEffect(() => {
     fetchMoreOnBottomReached(tableContainerRef.current);
@@ -192,14 +173,8 @@ export default function ProductTable() {
       table.setEditingRow(null);
     };
 
-  const openDeleteConfirmModal = (row: MRT_Row<Product>) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteProduct(row.original.id?.toString() ?? '');
-    }
-  };
-
   const table = useMaterialReactTable({
-    columns,
+    columns: COLUMNS,
     data: flatData,
     createDisplayMode: 'row',
     editDisplayMode: 'row',
@@ -209,18 +184,11 @@ export default function ProductTable() {
     onEditingRowCancel: () => setValidationErrors({}),
     onEditingRowSave: (props) => handleUpdateProduct(props),
     renderRowActions: ({ row, table }) => (
-      <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Edit">
-          <IconButton onClick={() => table.setEditingRow(row)}>
-            <EditIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => openDeleteConfirmModal(row)}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      <RowActions
+        row={row}
+        table={table}
+        onDelete={() => deleteProduct(+row.id)}
+      />
     ),
     enableRowVirtualization: true,
     enableSorting: false,
@@ -250,59 +218,7 @@ export default function ProductTable() {
       : undefined,
     enableTopToolbar: false,
     renderBottomToolbarCustomActions: ({ table }) => (
-      <Box
-        sx={{
-          display: 'flex',
-          width: '100%',
-          gap: '1rem',
-          p: '4px',
-        }}
-      >
-        {table.getIsSomeRowsSelected() ? (
-          <>
-            <Button
-              color="success"
-              disabled={!table.getIsSomeRowsSelected()}
-              onClick={() => {
-                alert('Delete Selected Accounts');
-              }}
-              variant="contained"
-            >
-              Disponibilizar selecionados
-            </Button>
-            <Button
-              color="warning"
-              disabled={!table.getIsSomeRowsSelected()}
-              onClick={() => {
-                alert('Delete Selected Accounts');
-              }}
-              variant="contained"
-            >
-              Indisponibilizar selecionados
-            </Button>
-            <Button
-              color="error"
-              disabled={!table.getIsSomeRowsSelected()}
-              onClick={() => {
-                alert('Delete Selected Accounts');
-              }}
-              variant="contained"
-            >
-              Deletar selecionados
-            </Button>
-          </>
-        ) : (
-          <Button
-            color="primary"
-            onClick={() => {
-              table.setCreatingRow(true);
-            }}
-            variant="contained"
-          >
-            Cadastrar Produto
-          </Button>
-        )}
-      </Box>
+      <ActionsToolbar table={table} />
     ),
     state: {
       isLoading: isLoadingProducts,
@@ -316,19 +232,10 @@ export default function ProductTable() {
     localization: MRT_Localization_PT_BR,
   });
 
-  return <MaterialReactTable table={table} />;
-}
-
-const validateRequired = (value: string) => !!value.length;
-
-function validateProduct(product: Product) {
-  return {
-    name: !validateRequired(product.name) ? 'Nome é obrigatório' : '',
-    category: !validateRequired(product.category)
-      ? 'Categoria é obrigatório'
-      : '',
-    stock: !validateRequired(product.stock.toString())
-      ? 'Estoque é obrigatório'
-      : '',
-  };
+  return (
+    <>
+      <MaterialReactTable table={table} />
+      {<DeleteModal />}
+    </>
+  );
 }

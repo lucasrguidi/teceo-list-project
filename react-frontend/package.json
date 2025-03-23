@@ -22,7 +22,8 @@
     "material-react-table": "^3.2.1",
     "react": "latest",
     "react-dom": "latest",
-    "react-intersection-observer": "^9.16.0"
+    "react-intersection-observer": "^9.16.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.68.0",

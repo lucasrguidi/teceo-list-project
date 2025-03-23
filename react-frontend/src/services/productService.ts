@@ -35,12 +35,13 @@ export async function createProduct(data: Product): Promise<void> {
 
 export async function updateProduct(data: Product): Promise<void> {
   try {
-    await apiClient.put(`/products/${data.id}`, {
+    const response = await apiClient.put(`/products/${data.id}`, {
       name: data.name,
       category: data.category,
       stock: data.stock,
       availableForSale: data.availableForSale,
     });
+    return response.data;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(error.message);
