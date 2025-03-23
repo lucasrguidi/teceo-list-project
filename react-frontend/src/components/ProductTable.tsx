@@ -22,6 +22,7 @@ import useProductTableColumns from '../hooks/useProductTableColumns';
 import { useScrollPagination } from '../hooks/useScrollPagination';
 import ActionsToolbar from './ActionsToolbar';
 import RowActions from './RowActions';
+import { Box, Paper, Skeleton } from '@mui/material';
 
 export default function ProductTable() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -140,7 +141,6 @@ export default function ProductTable() {
     enableFullScreenToggle: false,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
-
     getRowId: (originalRow) => originalRow.id as unknown as string,
     positionToolbarAlertBanner: 'head-overlay',
     muiTableContainerProps: {
@@ -179,11 +179,12 @@ export default function ProductTable() {
   });
 
   return (
-    <>
+    <Paper elevation={3} sx={{ p: 2, height: '100vh' }}>
       <MaterialReactTable table={table} />
+      {isLoadingProducts && <Skeleton variant="rectangular" height={200} />}
       {<ConfirmDeleteModal />}
       {<ConfirmBulkDeleteModal />}
       {<ConfirmBulkAvailabilityModal />}
-    </>
+    </Paper>
   );
 }

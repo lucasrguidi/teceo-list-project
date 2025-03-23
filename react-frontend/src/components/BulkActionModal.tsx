@@ -40,13 +40,9 @@ export default function BulkActionModal({
           {products.length > 0 && (
             <Box sx={{ mt: 2 }}>
               Produtos selecionados:
-              <ul>
-                {products.map((product, index) => (
-                  <li key={index}>
-                    <Typography>{product}</Typography>
-                  </li>
-                ))}
-              </ul>
+              {products.map((product, index) => (
+                <Typography>{product}</Typography>
+              ))}
             </Box>
           )}
         </DialogContentText>
