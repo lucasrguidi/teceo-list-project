@@ -49,14 +49,14 @@ Este projeto foi desenvolvido como resposta ao desafio técnico proposto, implem
 
 ## Rotas Backend
 
-`GET /products` - Listar todos os produtos
-`GET /products/id` - Buscar um produto
-`GET /products?page=1&limit=10/` - Listar produtos com paginação
-`POST /products` - Criar um produto
-`PUT /products/id` - Editar um produto
-`DELETE /products` - Deletar um produto
-`DELETE /products/bulk-delete?ids=1,2,3` - Deletar vários produtos
-`PUT /products/bulk-update?ids=64,65,66&availableForSale=false` - Atualizar a disponibilidade de vários produtos
+- `GET /products` - Listar todos os produtos
+- `GET /products/id` - Buscar um produto
+- `GET /products?page=1&limit=10/` - Listar produtos com paginação
+- `POST /products` - Criar um produto
+- `PUT /products/id` - Editar um produto
+- `DELETE /products` - Deletar um produto
+- `DELETE /products/bulk-delete?ids=1,2,3` - Deletar vários produtos
+- `PUT /products/bulk-update?ids=64,65,66&availableForSale=false` - Atualizar a disponibilidade de vários produtos
 
 ### Passos para Execução
 
@@ -92,33 +92,43 @@ Crie um arquivo `.env` na raiz do projeto back-end e adicione as seguintes var
    DATABASE_NAME=teceo_db
    ```
 
-4. Suba os containers com Docker Compose no backend:
+4. **Suba os containers com Docker Compose no backend:**
    ```bash
    docker-compose up --build
-```
+	```
 
 5. Inicie o servidor de desenvolvimento no frontend:
    ```bash
    npm run dev
-```
+	```
 
 
 3. Acesse a aplicação:
    ```bash
    http://localhost:3000
-```
+	```
 
 ## Screenshots
 
 **Tela Padrão**
 
+<img src="./react-frontend/public/lista-padrao.png" width="100%"/>
+
 **Edição Inline**
+
+<img src="./react-frontend/public/edicao-inline.png" width="100%"/>
 
 **Cadastro de produto inline**
 
+<img src="./react-frontend/public/cadastro-inline.png" width="100%"/>
+
 **Confirmação de exclusão**
 
+<img src="./react-frontend/public/confirmacao-exclusao.png" width="100%"/>
+
 **Confirmação de ação em massa**
+
+<img src="./react-frontend/public/confirmacao-acao-massa.png" width="100%"/>
 
 
 ## Considerações Finais
