@@ -1,12 +1,14 @@
-import { Box, Button, Typography } from '@mui/material';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import {
   MaterialReactTable,
+  MRT_Row,
   MRT_RowSelectionState,
+  MRT_TableOptions,
   useMaterialReactTable,
   type MRT_ColumnDef,
   type MRT_RowVirtualizer,
 } from 'material-react-table';
+import { MRT_Localization_PT_BR } from 'material-react-table/locales/pt-BR';
 import {
   useCallback,
   useEffect,
@@ -15,42 +17,12 @@ import {
   useState,
   type UIEvent,
 } from 'react';
-import { Product, ProductsResponse } from '../@types/product';
-import { getProducts } from '../services/productService';
-import { MRT_Localization_PT_BR } from 'material-react-table/locales/pt-BR';
+import { Product } from '../@types/product';
+import useProducts from '../hooks/useProducts';
 
-const columns: MRT_ColumnDef<Product>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Nome',
-    Header: () => <Typography fontWeight="bold">Nome</Typography>,
-    Cell: ({ cell }) => <Typography>{cell.getValue() as string}</Typography>,
-  },
-  {
-    accessorKey: 'category',
-    header: 'Categoria',
-    Header: () => <Typography fontWeight="bold">Categoria</Typography>,
-    Cell: ({ cell }) => <Typography>{cell.getValue() as string}</Typography>,
-  },
-  {
-    accessorKey: 'stock',
-    header: 'Estoque',
-    Header: () => <Typography fontWeight="bold">Estoque</Typography>,
-    Cell: ({ cell }) => <Typography>{cell.getValue() as number}</Typography>,
-  },
-  {
-    accessorKey: 'availableForSale',
-    header: 'Disponível para venda',
-    Header: () => (
-      <Typography fontWeight="bold">Disponível para venda</Typography>
-    ),
-    Cell: ({ cell }) => (
-      <Typography>{cell.getValue() ? 'Sim' : 'Não'}</Typography>
-    ),
-  },
-];
-
-const limit = 20;
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { updateProduct } from '../services/productService';
 
 export default function ProductTable() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -58,19 +30,102 @@ export default function ProductTable() {
 
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
 
-  const { data, fetchNextPage, isError, isFetching, isLoading } =
-    useInfiniteQuery<ProductsResponse>({
-      queryKey: ['products'],
-      queryFn: ({ pageParam }) =>
-        getProducts({ page: pageParam as number, limit }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, allPages) => {
-        const totalItems = lastPage.total;
-        const itemsFetched = allPages.flatMap((page) => page.products).length;
-        return itemsFetched < totalItems ? allPages.length + 1 : undefined;
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string | undefined>
+  >({});
+
+  const columns = useMemo<MRT_ColumnDef<Product>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Nome',
+        Header: () => <Typography fontWeight="bold">Nome</Typography>,
+        Cell: ({ cell }) => (
+          <Typography>{cell.getValue() as string}</Typography>
+        ),
+        muiEditTextFieldProps: {
+          required: true,
+          error: !!validationErrors?.name,
+          helperText: validationErrors?.name,
+
+          onFocus: () =>
+            setValidationErrors({
+              ...validationErrors,
+              firstName: undefined,
+            }),
+        },
       },
-      refetchOnWindowFocus: false,
-    });
+      {
+        accessorKey: 'category',
+        header: 'Categoria',
+        Header: () => <Typography fontWeight="bold">Categoria</Typography>,
+        Cell: ({ cell }) => (
+          <Typography>{cell.getValue() as string}</Typography>
+        ),
+        muiEditTextFieldProps: {
+          required: true,
+          error: !!validationErrors?.category,
+          helperText: validationErrors?.category,
+
+          onFocus: () =>
+            setValidationErrors({
+              ...validationErrors,
+              firstName: undefined,
+            }),
+        },
+      },
+      {
+        accessorKey: 'stock',
+        header: 'Estoque',
+        Header: () => <Typography fontWeight="bold">Estoque</Typography>,
+        Cell: ({ cell }) => (
+          <Typography>{cell.getValue() as number}</Typography>
+        ),
+        muiEditTextFieldProps: {
+          required: true,
+          error: !!validationErrors?.stock,
+          helperText: validationErrors?.stock,
+
+          onFocus: () =>
+            setValidationErrors({
+              ...validationErrors,
+              firstName: undefined,
+            }),
+        },
+      },
+      {
+        accessorKey: 'availableForSale',
+        header: 'Disponível para venda',
+        Header: () => (
+          <Typography fontWeight="bold">Disponível para venda</Typography>
+        ),
+        Cell: ({ cell }) => (
+          <Typography>{cell.getValue() ? 'Sim' : 'Não'}</Typography>
+        ),
+        editVariant: 'select',
+        editSelectOptions: ['Sim', 'Não'],
+        muiEditTextFieldProps: {
+          select: true,
+          error: !!validationErrors?.state,
+          helperText: validationErrors?.state,
+        },
+      },
+    ],
+    [validationErrors],
+  );
+
+  const {
+    data,
+    fetchNextPage,
+    isError,
+    isFetching,
+    isLoadingProducts,
+    createProduct,
+    isCreatingProduct,
+    deleteProduct,
+    isDeletingProduct,
+    isUpdatingProduct,
+  } = useProducts();
 
   const flatData = useMemo(
     () => data?.pages.flatMap((page) => page.products) ?? [],
@@ -100,9 +155,73 @@ export default function ProductTable() {
     fetchMoreOnBottomReached(tableContainerRef.current);
   }, [fetchMoreOnBottomReached]);
 
+  const handleCreateProduct: MRT_TableOptions<Product>['onCreatingRowSave'] =
+    async ({ values, table }) => {
+      const newValidationErrors = validateProduct(values);
+      if (Object.values(newValidationErrors).some((error) => error)) {
+        setValidationErrors(newValidationErrors);
+        return;
+      }
+      setValidationErrors({});
+      const product = {
+        name: values.name,
+        category: values.category,
+        stock: +values.stock,
+        availableForSale: values.availableForSale === 'Sim' ? true : false,
+      };
+      await createProduct(product);
+      table.setCreatingRow(null);
+    };
+
+  const handleUpdateProduct: MRT_TableOptions<Product>['onEditingRowSave'] =
+    async ({ values, table, row }) => {
+      const newValidationErrors = validateProduct(values);
+      if (Object.values(newValidationErrors).some((error) => error)) {
+        setValidationErrors(newValidationErrors);
+        return;
+      }
+      setValidationErrors({});
+      const product = {
+        id: +row.id,
+        name: values.name,
+        category: values.category,
+        stock: +values.stock,
+        availableForSale: values.availableForSale === 'Sim' ? true : false,
+      };
+      await updateProduct(product);
+      table.setEditingRow(null);
+    };
+
+  const openDeleteConfirmModal = (row: MRT_Row<Product>) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      deleteProduct(row.original.id?.toString() ?? '');
+    }
+  };
+
   const table = useMaterialReactTable({
     columns,
     data: flatData,
+    createDisplayMode: 'row',
+    editDisplayMode: 'row',
+    enableEditing: true,
+    onCreatingRowCancel: () => setValidationErrors({}),
+    onCreatingRowSave: handleCreateProduct,
+    onEditingRowCancel: () => setValidationErrors({}),
+    onEditingRowSave: (props) => handleUpdateProduct(props),
+    renderRowActions: ({ row, table }) => (
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
+        <Tooltip title="Edit">
+          <IconButton onClick={() => table.setEditingRow(row)}>
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => openDeleteConfirmModal(row)}>
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     enableRowVirtualization: true,
     enableSorting: false,
     enableColumnActions: false,
@@ -176,7 +295,7 @@ export default function ProductTable() {
           <Button
             color="primary"
             onClick={() => {
-              alert('Create New Account');
+              table.setCreatingRow(true);
             }}
             variant="contained"
           >
@@ -186,10 +305,11 @@ export default function ProductTable() {
       </Box>
     ),
     state: {
-      isLoading,
+      isLoading: isLoadingProducts,
       showAlertBanner: isError,
       showProgressBars: isFetching,
       rowSelection,
+      isSaving: isCreatingProduct || isUpdatingProduct || isDeletingProduct,
     },
     rowVirtualizerInstanceRef,
     rowVirtualizerOptions: { overscan: 4 },
@@ -197,4 +317,18 @@ export default function ProductTable() {
   });
 
   return <MaterialReactTable table={table} />;
+}
+
+const validateRequired = (value: string) => !!value.length;
+
+function validateProduct(product: Product) {
+  return {
+    name: !validateRequired(product.name) ? 'Nome é obrigatório' : '',
+    category: !validateRequired(product.category)
+      ? 'Categoria é obrigatório'
+      : '',
+    stock: !validateRequired(product.stock.toString())
+      ? 'Estoque é obrigatório'
+      : '',
+  };
 }

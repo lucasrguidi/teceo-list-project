@@ -6,6 +6,7 @@ import { routeTree } from './routeTree.gen';
 
 import './styles/globals.css';
 import { TanstackQueryProvider } from './providers/TanstackQueryProvider';
+import { NotificationProvider } from './providers/NotificationsProvider';
 
 const router = createRouter({ routeTree });
 
@@ -21,7 +22,9 @@ if (!rootElement.innerHTML) {
   root.render(
     <React.StrictMode>
       <TanstackQueryProvider>
-        <RouterProvider router={router} />
+        <NotificationProvider>
+          <RouterProvider router={router} />
+        </NotificationProvider>
       </TanstackQueryProvider>
     </React.StrictMode>,
   );
