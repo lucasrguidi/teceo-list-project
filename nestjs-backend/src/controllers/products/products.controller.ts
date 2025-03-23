@@ -35,6 +35,27 @@ export class ProductsController {
     return products;
   }
 
+  @Delete('bulk-delete')
+  async bulkDelete(@Query('ids') ids: string): Promise<void> {
+    const idsArray = ids.split(',').map((id) => parseInt(id));
+    const result = await this.productsService.bulkDelete(idsArray);
+    return result;
+  }
+
+  @Put('bulk-update')
+  async bulkUpdate(
+    @Query('ids') ids: string,
+    @Query('availableForSale') availableForSale: boolean,
+  ): Promise<void> {
+    const idsArray = ids.split(',').map((id) => parseInt(id));
+
+    const result = await this.productsService.bulkUpdate(
+      idsArray,
+      availableForSale,
+    );
+    return result;
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: number): Promise<ProductResponseDto | null> {
     const product = await this.productsService.findOne(id);

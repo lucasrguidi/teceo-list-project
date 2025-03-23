@@ -46,4 +46,12 @@ export class ProductsService implements ProductServiceContract {
   async remove(id: number): Promise<void> {
     await this.productsRepository.remove(id);
   }
+
+  async bulkDelete(ids: number[]): Promise<void> {
+    await this.productsRepository.bulkDelete(ids);
+  }
+
+  async bulkUpdate(ids: number[], availableForSale: boolean): Promise<void> {
+    await this.productsRepository.bulkUpdate(ids, availableForSale);
+  }
 }

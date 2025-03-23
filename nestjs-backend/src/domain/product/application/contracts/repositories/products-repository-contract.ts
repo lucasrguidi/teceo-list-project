@@ -16,4 +16,8 @@ export abstract class ProductsRepositoryContract {
   ): Promise<Product | null>;
 
   abstract remove(id: number): Promise<void>;
+
+  abstract bulkDelete(ids: number[]): Promise<void>;
+
+  abstract bulkUpdate(ids: number[], availableForSale: boolean): Promise<void>;
 }
