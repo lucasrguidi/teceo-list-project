@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProductsModule } from './products/products.module';
-import { Product } from './products/entity/product.entity';
+import { Product } from './domain/product/enterprise/entities/product.entity';
+import { ProductsModule } from './domain/product/application/products.module';
 
 if (!process.env.DATABASE_PORT) {
   throw new Error('DATABASE_PORT is not set in env');

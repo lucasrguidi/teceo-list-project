@@ -12,11 +12,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductsService } from '../service/products.service';
-import { ProductResponseDto } from '../dtos/product-response.dto';
-import { CreateProductDto } from '../dtos/create-product.dto';
-import { UpdateProductDto } from '../dtos/update-product.dto';
-import { PaginationQueryDto } from '../dtos/pagination-query.dto';
+import { ProductsService } from '../../domain/product/application/services/products.service';
+import { ProductResponseDto } from '../../domain/product/enterprise/DTOs/product-response.dto';
+import { CreateProductDto } from '../../domain/product/enterprise/DTOs/create-product.dto';
+import { UpdateProductDto } from '../../domain/product/enterprise/DTOs/update-product.dto';
+import { PaginationQueryDto } from '../../domain/product/enterprise/DTOs/pagination-query.dto';
 
 @Controller('products')
 export class ProductsController {
