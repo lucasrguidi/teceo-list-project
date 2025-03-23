@@ -86,14 +86,18 @@ export async function updateProducts(
 ): Promise<void> {
   try {
     const idsParam = ids.join(',');
-    await apiClient.delete('/products/bulk-delete', {
-      params: { ids: idsParam, availableForSale: availableForSale },
+
+    await apiClient.put('/products/bulk-update', null, {
+      params: {
+        ids: idsParam,
+        availableForSale: availableForSale,
+      },
     });
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(error.message);
     }
 
-    throw new Error('Erro ao deletar produto');
+    throw new Error('Erro ao atualizar produto');
   }
 }

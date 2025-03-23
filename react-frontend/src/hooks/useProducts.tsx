@@ -6,17 +6,16 @@ import {
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { ProductsResponse } from '../@types/product';
+import BulkActionModal from '../components/BulkActionModal';
 import ConfirmModal from '../components/ConfirmModal';
 import {
   createProduct as createProductFn,
   deleteProduct as deleteProductFn,
+  deleteProducts as deleteProductsFn,
   getProducts,
   updateProduct as updateProductFn,
-  deleteProducts as deleteProductsFn,
-  updateProducts as updateProductsFn,
+  updateProducts,
 } from '../services/productService';
-import BulkActionModal from '../components/BulkActionModal';
-import { useScrollPagination } from './useScrollPagination';
 
 export default function useProducts(limit = 20) {
   const queryClient = useQueryClient();
@@ -31,6 +30,14 @@ export default function useProducts(limit = 20) {
   const [productsToDelete, setProductsToDelete] = useState<number[] | null>(
     null,
   );
+
+  const [
+    isConfirmBulkAvailabilityModalOpen,
+    setIsConfirmBulkAvailabilityModalOpen,
+  ] = useState(false);
+  const [productsToUpdateAvailability, setProductsToUpdateAvailability] =
+    useState<number[] | null>(null);
+  const [availabilityStatus, setAvailabilityStatus] = useState<boolean>(false);
 
   const {
     data,
@@ -98,6 +105,23 @@ export default function useProducts(limit = 20) {
     },
   );
 
+  const {
+    mutate: updateProductsAvailability,
+    isPending: isUpdatingProductsAvailability,
+  } = useMutation({
+    mutationFn: (params: { ids: number[]; availableForSale: boolean }) =>
+      updateProducts(params.ids, params.availableForSale),
+    onSuccess: () => {
+      toast.success(
+        'Status de disponibilidade dos produtos atualizado com sucesso',
+      );
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar status de disponibilidade dos produtos');
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
+  });
+
   const handleDeleteClick = (productId: number) => {
     setProductToDelete(productId);
     setIsConfirmDeleteModalOpen(true);
@@ -134,13 +158,36 @@ export default function useProducts(limit = 20) {
     setProductToDelete(null);
   };
 
+  const handleBulkAvailabilityClick = (
+    productIds: number[],
+    availableForSale: boolean,
+  ) => {
+    setProductsToUpdateAvailability(productIds);
+    setAvailabilityStatus(availableForSale);
+    setIsConfirmBulkAvailabilityModalOpen(true);
+  };
+
+  const handleCloseBulkAvailabilityModal = () => {
+    setIsConfirmBulkAvailabilityModalOpen(false);
+    setProductsToUpdateAvailability(null);
+  };
+
+  const handleConfirmBulkAvailability = () => {
+    if (productsToUpdateAvailability !== null) {
+      updateProductsAvailability({
+        ids: productsToUpdateAvailability,
+        availableForSale: availabilityStatus,
+      });
+    }
+    setIsConfirmBulkAvailabilityModalOpen(false);
+    setProductsToUpdateAvailability(null);
+  };
+
   const getProductNames = (productsToDelete: number[]): string[] => {
     if (!data || !productsToDelete) return [];
 
-    // Acessar todos os produtos carregados
     const allProducts = data.pages.flatMap((page) => page.products);
 
-    // Filtrar os produtos que estão no array productsToDelete
     const productsToDeleteNames = allProducts
       .filter((product) => productsToDelete.includes(product.id!))
       .map((product) => product.name);
@@ -186,6 +233,27 @@ export default function useProducts(limit = 20) {
           title="Confirmar exclusão em massa"
           text="Tem certeza que deseja deletar os produtos? Esta ação não pode ser desfeita."
           actionText="Deletar"
+          products={productNames}
+        />
+      );
+    },
+    updateProductsAvailability: handleBulkAvailabilityClick,
+    isUpdatingProductsAvailability,
+    ConfirmBulkAvailabilityModal: () => {
+      const productNames = productsToUpdateAvailability
+        ? getProductNames(productsToUpdateAvailability)
+        : [];
+
+      return (
+        <BulkActionModal
+          open={isConfirmBulkAvailabilityModalOpen}
+          onClose={handleCloseBulkAvailabilityModal}
+          onConfirm={handleConfirmBulkAvailability}
+          title={`Confirmar ${availabilityStatus ? 'disponibilização' : 'indisponibilização'} em massa`}
+          text={`Tem certeza que deseja ${availabilityStatus ? 'disponibilizar' : 'indisponibilizar'} os produtos? Esta ação não pode ser desfeita.`}
+          actionText={
+            availabilityStatus ? 'Disponibilizar' : 'Indisponibilizar'
+          }
           products={productNames}
         />
       );

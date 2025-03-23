@@ -1,6 +1,7 @@
 import { Typography } from '@mui/material';
 import {
   MaterialReactTable,
+  MRT_Row,
   MRT_RowSelectionState,
   MRT_TableOptions,
   useMaterialReactTable,
@@ -16,7 +17,6 @@ import { validateProduct } from '../helpers/validators';
 import { useScrollPagination } from '../hooks/useScrollPagination';
 import ActionsToolbar from './ActionsToolbar';
 import RowActions from './RowActions';
-import { rowsMetaStateInitializer } from '@mui/x-data-grid/internals';
 
 export default function ProductTable() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -24,6 +24,7 @@ export default function ProductTable() {
     Record<string, string | undefined>
   >({});
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+
   const rowVirtualizerInstanceRef = useRef<MRT_RowVirtualizer>(null);
 
   const COLUMNS = useMemo<MRT_ColumnDef<Product>[]>(
@@ -121,6 +122,8 @@ export default function ProductTable() {
     ConfirmDeleteModal,
     deleteProducts,
     ConfirmBulkDeleteModal,
+    updateProductsAvailability,
+    ConfirmBulkAvailabilityModal,
   } = useProducts();
 
   const flatData = useMemo(
@@ -205,6 +208,7 @@ export default function ProductTable() {
     enableFullScreenToggle: false,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
+
     getRowId: (originalRow) => originalRow.id as unknown as string,
     positionToolbarAlertBanner: 'head-overlay',
     muiTableContainerProps: {
@@ -225,6 +229,9 @@ export default function ProductTable() {
         table={table}
         onDelete={deleteProducts}
         rowSelection={rowSelection}
+        onUpdateAvailability={(products, availableForSale) =>
+          updateProductsAvailability(products, availableForSale)
+        }
       />
     ),
     state: {
@@ -244,6 +251,7 @@ export default function ProductTable() {
       <MaterialReactTable table={table} />
       {<ConfirmDeleteModal />}
       {<ConfirmBulkDeleteModal />}
+      {<ConfirmBulkAvailabilityModal />}
     </>
   );
 }
