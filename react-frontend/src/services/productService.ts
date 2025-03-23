@@ -64,3 +64,36 @@ export async function deleteProduct(id: string): Promise<void> {
     throw new Error('Erro ao deletar produto');
   }
 }
+
+export async function deleteProducts(ids: number[]): Promise<void> {
+  try {
+    const idsParam = ids.join(',');
+    await apiClient.delete('/products/bulk-delete', {
+      params: { ids: idsParam },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+
+    throw new Error('Erro ao deletar produto');
+  }
+}
+
+export async function updateProducts(
+  ids: number[],
+  availableForSale: boolean,
+): Promise<void> {
+  try {
+    const idsParam = ids.join(',');
+    await apiClient.delete('/products/bulk-delete', {
+      params: { ids: idsParam, availableForSale: availableForSale },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+
+    throw new Error('Erro ao deletar produto');
+  }
+}

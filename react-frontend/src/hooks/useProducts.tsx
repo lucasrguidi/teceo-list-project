@@ -12,14 +12,25 @@ import {
   deleteProduct as deleteProductFn,
   getProducts,
   updateProduct as updateProductFn,
+  deleteProducts as deleteProductsFn,
+  updateProducts as updateProductsFn,
 } from '../services/productService';
+import BulkActionModal from '../components/BulkActionModal';
+import { useScrollPagination } from './useScrollPagination';
 
 export default function useProducts(limit = 20) {
   const queryClient = useQueryClient();
 
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
     useState(false);
+
+  const [isConfirmBulkDeleteModalOpen, setIsConfirmBulkDeleteModalOpen] =
+    useState(false);
+
   const [productToDelete, setProductToDelete] = useState<number | null>(null);
+  const [productsToDelete, setProductsToDelete] = useState<number[] | null>(
+    null,
+  );
 
   const {
     data,
@@ -73,12 +84,19 @@ export default function useProducts(limit = 20) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
 
-  const productName = productToDelete
-    ? data?.pages
-        .flatMap((page) => page.products)
-        .find((product) => product.id === productToDelete)?.name ||
-      'este produto'
-    : 'este produto';
+  const { mutate: deleteProducts, isPending: isDeletingProducts } = useMutation(
+    {
+      mutationFn: deleteProductsFn,
+      onSuccess: () => {
+        toast.success('Produtos removidos com sucesso');
+      },
+      onError: () => {
+        toast.error('Erro ao remover produtos');
+      },
+      onSettled: () =>
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+    },
+  );
 
   const handleDeleteClick = (productId: number) => {
     setProductToDelete(productId);
@@ -98,6 +116,38 @@ export default function useProducts(limit = 20) {
     setProductToDelete(null);
   };
 
+  const handleBulkDeleteClick = (productIds: number[]) => {
+    setProductsToDelete(productIds);
+    setIsConfirmBulkDeleteModalOpen(true);
+  };
+
+  const handleCloseBulkDeleteModal = () => {
+    setIsConfirmBulkDeleteModalOpen(false);
+    setProductsToDelete(null);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    if (productsToDelete !== null) {
+      deleteProducts(productsToDelete);
+    }
+    setIsConfirmBulkDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
+
+  const getProductNames = (productsToDelete: number[]): string[] => {
+    if (!data || !productsToDelete) return [];
+
+    // Acessar todos os produtos carregados
+    const allProducts = data.pages.flatMap((page) => page.products);
+
+    // Filtrar os produtos que estão no array productsToDelete
+    const productsToDeleteNames = allProducts
+      .filter((product) => productsToDelete.includes(product.id!))
+      .map((product) => product.name);
+
+    return productsToDeleteNames;
+  };
+
   return {
     data,
     fetchNextPage,
@@ -110,7 +160,8 @@ export default function useProducts(limit = 20) {
     isUpdatingProduct,
     deleteProduct: handleDeleteClick,
     isDeletingProduct,
-    DeleteModal: () => {
+    deleteProducts: handleBulkDeleteClick,
+    ConfirmDeleteModal: () => {
       return (
         <ConfirmModal
           open={isConfirmDeleteModalOpen}
@@ -119,6 +170,23 @@ export default function useProducts(limit = 20) {
           title="Confirmar exclusão"
           text="Tem certeza que deseja deletar o produto? Esta ação não pode ser desfeita."
           actionText="Deletar"
+        />
+      );
+    },
+    ConfirmBulkDeleteModal: () => {
+      const productNames = productsToDelete
+        ? getProductNames(productsToDelete)
+        : [];
+
+      return (
+        <BulkActionModal
+          open={isConfirmBulkDeleteModalOpen}
+          onClose={handleCloseBulkDeleteModal}
+          onConfirm={handleConfirmBulkDelete}
+          title="Confirmar exclusão em massa"
+          text="Tem certeza que deseja deletar os produtos? Esta ação não pode ser desfeita."
+          actionText="Deletar"
+          products={productNames}
         />
       );
     },

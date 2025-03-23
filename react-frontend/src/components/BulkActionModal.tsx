@@ -5,6 +5,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Box, Typography } from '@mui/material';
 
 interface BulkActionModal {
   open: boolean;
@@ -13,6 +14,7 @@ interface BulkActionModal {
   title: string;
   text: string;
   actionText: string;
+  products: string[];
 }
 
 export default function BulkActionModal({
@@ -22,6 +24,7 @@ export default function BulkActionModal({
   title,
   text,
   actionText,
+  products,
 }: BulkActionModal) {
   return (
     <Dialog
@@ -34,6 +37,18 @@ export default function BulkActionModal({
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
           {text}
+          {products.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              Produtos selecionados:
+              <ul>
+                {products.map((product, index) => (
+                  <li key={index}>
+                    <Typography>{product}</Typography>
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

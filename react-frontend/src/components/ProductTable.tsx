@@ -16,6 +16,7 @@ import { validateProduct } from '../helpers/validators';
 import { useScrollPagination } from '../hooks/useScrollPagination';
 import ActionsToolbar from './ActionsToolbar';
 import RowActions from './RowActions';
+import { rowsMetaStateInitializer } from '@mui/x-data-grid/internals';
 
 export default function ProductTable() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -117,7 +118,9 @@ export default function ProductTable() {
     isDeletingProduct,
     isUpdatingProduct,
     updateProduct,
-    DeleteModal,
+    ConfirmDeleteModal,
+    deleteProducts,
+    ConfirmBulkDeleteModal,
   } = useProducts();
 
   const flatData = useMemo(
@@ -218,7 +221,11 @@ export default function ProductTable() {
       : undefined,
     enableTopToolbar: false,
     renderBottomToolbarCustomActions: ({ table }) => (
-      <ActionsToolbar table={table} />
+      <ActionsToolbar
+        table={table}
+        onDelete={deleteProducts}
+        rowSelection={rowSelection}
+      />
     ),
     state: {
       isLoading: isLoadingProducts,
@@ -235,7 +242,8 @@ export default function ProductTable() {
   return (
     <>
       <MaterialReactTable table={table} />
-      {<DeleteModal />}
+      {<ConfirmDeleteModal />}
+      {<ConfirmBulkDeleteModal />}
     </>
   );
 }

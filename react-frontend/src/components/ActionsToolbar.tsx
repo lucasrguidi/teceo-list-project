@@ -1,12 +1,22 @@
 import { Box, Button } from '@mui/material';
-import { MRT_TableInstance } from 'material-react-table';
+import {
+  MRT_Row,
+  MRT_RowSelectionState,
+  MRT_TableInstance,
+} from 'material-react-table';
 import { Product } from '../@types/product';
 
 interface ActionsToolbarProps {
   table: MRT_TableInstance<Product>;
+  onDelete: (products: number[]) => void;
+  rowSelection: MRT_RowSelectionState;
 }
 
-export default function ActionsToolbar({ table }: ActionsToolbarProps) {
+export default function ActionsToolbar({
+  table,
+  onDelete,
+  rowSelection,
+}: ActionsToolbarProps) {
   return (
     <Box
       sx={{
@@ -41,10 +51,8 @@ export default function ActionsToolbar({ table }: ActionsToolbarProps) {
           <Button
             color="error"
             disabled={!table.getIsSomeRowsSelected()}
-            onClick={() => {
-              alert('Delete Selected Accounts');
-            }}
             variant="contained"
+            onClick={() => onDelete(Object.keys(rowSelection).map(Number))}
           >
             Deletar selecionados
           </Button>
